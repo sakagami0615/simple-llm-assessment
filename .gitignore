@@ -216,3 +216,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+.codex/
+.agents/
+.deepeval/
+*.py[cod]
+reports/*.json

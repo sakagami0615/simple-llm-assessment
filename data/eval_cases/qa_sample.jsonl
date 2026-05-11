@@ -1,0 +1,2 @@
+{"id":"qa_001","input":"DeepEvalとは何ですか？","expected_output":"DeepEvalはLLMアプリケーションの出力品質を評価するためのフレームワークです。","tags":["qa","baseline"]}
+{"id":"qa_002","input":"LLM評価でactual_outputとは何ですか？","expected_output":"actual_outputは評価対象のLLMアプリが実際に生成した出力です。","tags":["qa","baseline"]}
