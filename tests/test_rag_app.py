@@ -36,3 +36,30 @@ def test_rag_app_retrieves_context_with_vector_similarity():
     assert result.retrieval_context == [
         "経費精算は発生日から30日以内に申請する必要があります。",
     ]
+
+
+def test_rag_app_reuses_persisted_chroma_collection(tmp_path):
+    persist_directory = tmp_path / "chroma"
+
+    LangChainRAGApp.from_contexts(
+        [
+            "ローカル評価のJSONレポートはreportsディレクトリに保存されます。",
+            "経費精算は発生日から30日以内に申請する必要があります。",
+        ],
+        embeddings=KeywordEmbeddings(),
+        chat_model=FakeListChatModel(responses=["unused"]),
+        persist_directory=persist_directory,
+    )
+
+    app = LangChainRAGApp.from_contexts(
+        [],
+        embeddings=KeywordEmbeddings(),
+        chat_model=FakeListChatModel(responses=["発生日から30日以内です。"]),
+        persist_directory=persist_directory,
+    )
+
+    result = app.answer("経費精算の期限は？")
+
+    assert result.retrieval_context == [
+        "経費精算は発生日から30日以内に申請する必要があります。",
+    ]
