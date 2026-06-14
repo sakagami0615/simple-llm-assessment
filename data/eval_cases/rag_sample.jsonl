@@ -1,2 +1,0 @@
-{"id":"rag_001","input":"経費精算の期限は？","expected_output":"発生日から30日以内です。","retrieval_context":["経費精算は発生日から30日以内に申請する必要があります。"],"tags":["rag","sample"]}
-{"id":"rag_002","input":"評価レポートはどこに保存されますか？","expected_output":"reportsディレクトリに保存されます。","retrieval_context":["ローカル評価のJSONレポートはreportsディレクトリに保存されます。"],"tags":["rag","sample"]}

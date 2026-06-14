@@ -1,40 +1,34 @@
 [project]
-name = "llm-app"
+name = "local-llm-eval"
 version = "0.1.0"
-description = "Simple LLM app with DeepEval quality tests"
+description = "Local LLM evaluation orchestrator for lm-evaluation-harness and OpenCompass"
 authors = [
     {name = "sakagami0615", email = "sakagami0615@gmail.com"}
 ]
 readme = "README.md"
 requires-python = ">=3.14,<4.0"
 dependencies = [
-    "langchain>=1.0.0",
-    "langchain-openai>=1.0.0",
-    "openai>=1.0.0",
-    "python-dotenv>=1.0.0",
-    "langchain-chroma (>=1.1.0,<2.0.0)",
+    "pyyaml>=6.0.0",
 ]
 
 [project.scripts]
-llm-app = "llm_qa_app.cli:main"
+local-llm-eval = "local_llm_eval.cli:main"
 
 [tool.poetry]
 packages = [
-    {include = "llm_qa_app", from = "app"},
-    {include = "rag_app", from = "app"},
+    {include = "local_llm_eval", from = "src"},
 ]
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.0.0"
 
 [tool.poetry.group.eval.dependencies]
-deepeval = ">=3.0.0"
+lm-eval = {version = ">=0.4.0", python = "<3.14"}
+opencompass = {version = ">=0.5.0", python = "<3.14"}
+datasets = {version = ">=2.0.0", python = "<3.14"}
 
 [tool.pytest.ini_options]
-pythonpath = [".", "app"]
-filterwarnings = [
-    "ignore:'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16:DeprecationWarning:deepeval\\.tracing\\.tracing",
-]
+pythonpath = [".", "src"]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

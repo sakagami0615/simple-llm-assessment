@@ -1,0 +1,5 @@
+id: baseline
+models:
+  - models/ollama-llama3.yaml
+benchmarks:
+  - benchmarks/mmlu.yaml

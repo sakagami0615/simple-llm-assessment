@@ -222,3 +222,7 @@ __marimo__/
 .deepeval/
 *.py[cod]
 reports/*.json
+runs/
+
+@old/
+docs/superpowers/

@@ -1,0 +1,8 @@
+id: my_internal_qa
+runner: OpenCompass
+dataset: datasets/my_internal_qa.json
+dataset_format: chatml
+evaluator: cascade
+metrics:
+  - exact_match
+  - llm_judge

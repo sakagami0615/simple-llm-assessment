@@ -1,48 +1,132 @@
-# simple-llm-assessment
+# local-llm-eval
 
-このプロジェクトは、OpenAI を使った簡易的な質問回答アプリ、LangChain を使った簡易RAGアプリ、DeepEval による LLM 性能評価テストを含みます。
-
-`app/` は本番デプロイ対象のアプリケーションコード、`tests/` は DeepEval による性能評価テストです。
+ローカル LLM サーバを対象に、lm-evaluation-harness と OpenCompass の評価を一括実行するための薄いオーケストレーターです。
 
 ## セットアップ
 
 ```bash
 poetry install --with eval
-cp .env.example .env
 ```
 
-`.env` に `OPENAI_API_KEY` を設定してください。
+依存関係の補足は [docs/APPENDIX.md](docs/APPENDIX.md) を参照してください。
 
-このプロジェクトでは現在 `requires-python = ">=3.14,<4.0"` を指定しています。Python 3.14 対応が原因で依存関係の解決に失敗する場合は、互換性対応として Python バージョンを下げてください。
+## 前提
 
-## QAアプリの実行
+Ollama、vLLM、LM Studio、llama.cpp server などのローカル LLM サーバは事前に起動しておきます。このツールはサーバ起動を管理しません。
+
+モデルサーバは OpenAI 互換 API を提供している前提です。OpenAI 社のホステッド API は使わず、`base_url` は `http://localhost:.../v1` のようなローカルエンドポイントを指定します。
+
+## 実行
+
+設定の検証:
 
 ```bash
-poetry run llm-app ask "DeepEvalとは何ですか？"
+poetry run local-llm-eval validate config/suites/baseline.yaml
 ```
 
-## LLM性能評価の実行
+実行予定コマンドの確認:
 
 ```bash
-RUN_LLM_EVAL=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 poetry run pytest tests/test_llm_eval.py tests/test_rag_eval.py -v
+poetry run local-llm-eval run config/suites/baseline.yaml --dry-run
 ```
 
-`OPENAI_API_KEY` が未設定、または `RUN_LLM_EVAL=1` が未指定の場合、この評価テストは skip されます。
-実行後、`reports/` 配下に `deepeval-qa-report-*.json` と `deepeval-rag-report-*.json` が出力されます。
-
-## ローカルチェック
-
-DeepEval は socket アクセスを必要とする pytest プラグインをインストールする場合があります。制限された sandbox でテストを実行する場合は、pytest プラグインの自動ロードを無効化してください。
+評価の実行:
 
 ```bash
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 poetry run pytest tests/test_llm_eval.py tests/test_rag_eval.py -v
+poetry run local-llm-eval run config/suites/baseline.yaml
 ```
 
-## ローカルで検証済みのコマンド
+## 構成
 
-- `poetry install`
-- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 poetry run pytest tests/test_llm_eval.py tests/test_rag_eval.py -v`
-- `poetry run python -c "from llm_qa_app.cli import main as app_main; from rag_app.rag_app import LangChainRAGApp; print(app_main, LangChainRAGApp)"`
-- `poetry run llm-app --help`
+```text
+.
+├── config/
+│   ├── models/
+│   │   ├── ollama-llama3.yaml
+│   │   └── vllm-qwen2-7b.yaml
+│   ├── benchmarks/
+│   │   ├── mmlu.yaml
+│   │   └── my_internal_qa.yaml
+│   └── suites/
+│       └── baseline.yaml
+├── datasets/
+│   └── my_internal_qa.json
+├── src/
+│   └── local_llm_eval/
+│       ├── cli.py
+│       ├── config.py
+│       ├── planner.py
+│       ├── executor.py
+│       ├── results.py
+│       └── runners/
+│           ├── lm_evaluation_harness.py
+│           └── opencompass.py
+├── tests/
+├── docs/
+└── runs/
+```
 
-OpenAI を使うアプリ実行と DeepEval metric の実行には `OPENAI_API_KEY` が必要です。この環境では、これらのコマンドは実行していません。
+- `config/models/`: 1モデル接続 = 1 YAML
+- `config/benchmarks/`: 1ベンチマーク = 1 YAML
+- `config/suites/`: 実行する model と benchmark の束
+- `datasets/`: 自作データセット
+- `runs/`: 実行結果
+- `src/local_llm_eval/`: CLI とオーケストレーション実装
+
+## モデル定義
+
+```yaml
+id: ollama-llama3
+provider: openai_compatible
+base_url: http://localhost:11434/v1
+model: llama3.1:8b
+api_key_env: LOCAL_LLM_API_KEY
+generation:
+  temperature: 0
+  max_tokens: 512
+```
+
+## ベンチマーク定義
+
+lm-evaluation-harness:
+
+```yaml
+id: mmlu
+runner: lm-evaluation-harness
+task: mmlu
+runner_params:
+  num_fewshot: 5
+metrics:
+  - acc
+```
+
+OpenCompass:
+
+```yaml
+id: my_internal_qa
+runner: OpenCompass
+dataset: datasets/my_internal_qa.json
+dataset_format: chatml
+evaluator: cascade
+metrics:
+  - exact_match
+  - llm_judge
+```
+
+## スイート定義
+
+```yaml
+id: baseline
+models:
+  - models/ollama-llama3.yaml
+benchmarks:
+  - benchmarks/mmlu.yaml
+```
+
+## テスト
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 poetry run pytest -q
+```
+
+テストコードの内容は [docs/TESTING.md](docs/TESTING.md) を参照してください。

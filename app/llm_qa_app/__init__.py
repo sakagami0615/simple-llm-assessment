@@ -1,1 +1,0 @@
-"""Simple LLM QA app."""
