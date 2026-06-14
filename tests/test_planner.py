@@ -77,3 +77,41 @@ benchmarks:
 
     with pytest.raises(ConfigError, match="Referenced file does not exist"):
         plan_suite(suite_path)
+
+
+def test_plan_suite_rejects_missing_dataset_file(tmp_path: Path) -> None:
+    write(
+        tmp_path / "config" / "models" / "ollama.yaml",
+        """
+id: ollama-llama3
+provider: openai_compatible
+base_url: http://localhost:11434/v1
+model: llama3.1:8b
+generation: {}
+""",
+    )
+    write(
+        tmp_path / "config" / "benchmarks" / "qa.yaml",
+        """
+id: my_internal_qa
+runner: OpenCompass
+dataset: datasets/missing.json
+dataset_format: chatml
+evaluator: cascade
+metrics:
+  - exact_match
+""",
+    )
+    suite_path = write(
+        tmp_path / "config" / "suites" / "baseline.yaml",
+        """
+id: baseline
+models:
+  - models/ollama.yaml
+benchmarks:
+  - benchmarks/qa.yaml
+""",
+    )
+
+    with pytest.raises(ConfigError, match="Dataset file does not exist"):
+        plan_suite(suite_path)

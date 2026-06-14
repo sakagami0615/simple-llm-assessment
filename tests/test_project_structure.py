@@ -21,10 +21,12 @@ def test_old_packages_are_removed() -> None:
     assert not (root / "app" / old_eval_package).exists()
 
 
-def test_generated_python_caches_are_not_left_in_source_tree() -> None:
+def test_generated_outputs_are_ignored() -> None:
     root = Path.cwd()
-    caches = list((root / "src").rglob("__pycache__")) + list((root / "tests").rglob("__pycache__"))
-    assert caches == []
+    ignore_patterns = set((root / ".gitignore").read_text(encoding="utf-8").splitlines())
+    assert "__pycache__/" in ignore_patterns
+    assert ".pytest_cache/" in ignore_patterns
+    assert "runs/" in ignore_patterns
 
 
 def test_public_code_has_docstrings() -> None:

@@ -54,6 +54,16 @@ def _resolve_reference(suite_path: Path, reference: str) -> Path:
     return resolved
 
 
+def _validate_dataset_reference(suite_path: Path, benchmark: BenchmarkConfig) -> None:
+    if benchmark.dataset is None:
+        return
+    dataset_path = Path(benchmark.dataset)
+    if not dataset_path.is_absolute():
+        dataset_path = suite_path.parent.parent.parent / dataset_path
+    if not dataset_path.exists():
+        raise ConfigError(f"Dataset file does not exist: {benchmark.dataset}")
+
+
 def plan_suite(path: str | Path) -> EvaluationPlan:
     """suite ファイルを実行可能な評価ジョブへ解決する。
 
@@ -73,6 +83,8 @@ def plan_suite(path: str | Path) -> EvaluationPlan:
     benchmarks = [
         load_benchmark_config(_resolve_reference(suite_path, item)) for item in suite.benchmarks
     ]
+    for benchmark in benchmarks:
+        _validate_dataset_reference(suite_path, benchmark)
     jobs = [
         EvaluationJob(
             model=model,
